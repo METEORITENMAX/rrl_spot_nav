@@ -1,0 +1,51 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/max/rrl_spot_ws/install/gpp_action_examples_interface/include/**",
+        "/home/max/bdaii_spot_ws/install/spot_driver/include/**",
+        "/home/max/bdaii_spot_ws/install/spot_msgs/include/**",
+        "/home/max/bdaii_spot_ws/install/proto2ros/include/**",
+        "/home/max/wb_spot_ws/install/webots_spot_msgs/include/**",
+        "/home/max/wb_spot_ws/install/webots_ros2_control/include/**",
+        "/home/max/wb_spot_ws/install/webots_ros2_driver/include/**",
+        "/home/max/wb_spot_ws/install/webots_ros2_msgs/include/**",
+        "/home/max/wb_spot_ws/install/octomap_server/include/**",
+        "/home/max/local-3d-navigation-ros/install/octomap_utils/include/**",
+        "/home/max/local-3d-navigation-ros/install/geodesy/include/**",
+        "/home/max/local-3d-navigation-ros/install/fognav_msgs/include/**",
+        "/home/max/local-3d-navigation-ros/install/geographic_msgs/include/**",
+        "/home/max/local-3d-navigation-ros/install/fog_msgs/include/**",
+        "/home/max/botanbot_vox_ws/install/ros2_full_sensor_suite/include/**",
+        "/home/max/botanbot_vox_ws/install/botanbot_gui/include/**",
+        "/home/max/botanbot_vox_ws/install/botanbot_gazebo/include/**",
+        "/home/max/vox_nav_ws/install/vox_nav_waypoint_nav_clients/include/**",
+        "/home/max/vox_nav_ws/install/vox_nav_planning/include/**",
+        "/home/max/vox_nav_ws/install/vox_nav_navigators/include/**",
+        "/home/max/vox_nav_ws/install/vox_nav_map_server/include/**",
+        "/home/max/vox_nav_ws/install/vox_nav_control/include/**",
+        "/home/max/vox_nav_ws/install/vox_nav_utilities/include/**",
+        "/home/max/vox_nav_ws/install/vox_nav_msgs/include/**",
+        "/home/max/mapping_ws/install/rtabmap_slam/include/**",
+        "/home/max/mapping_ws/install/rtabmap_odom/include/**",
+        "/home/max/mapping_ws/install/rtabmap_util/include/**",
+        "/home/max/mapping_ws/install/rtabmap_sync/include/**",
+        "/home/max/mapping_ws/install/rtabmap_rviz_plugins/include/**",
+        "/home/max/mapping_ws/install/rtabmap_conversions/include/**",
+        "/home/max/mapping_ws/install/rtabmap_msgs/include/**",
+        "/opt/ros/humble/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
