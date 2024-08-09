@@ -23,7 +23,8 @@ setup(
             'poses_to_trajectory = rrl_spot_nav.poses_to_trajectory:main',
             'set_start_marker = rrl_spot_nav.set_start_marker:main',
             'set_goal_marker = rrl_spot_nav.set_goal_marker:main',
-            'path_follower = rrl_spot_nav.pathfollower:main'
+            'path_follower = rrl_spot_nav.pathfollower:main',
+            'rrt_path_follower = rrl_spot_nav.rrt_path_follower:main'
         ],
     },
 )

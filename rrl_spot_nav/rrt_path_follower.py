@@ -8,7 +8,7 @@ from geometry_msgs.msg import PointStamped, Pose, Twist
 import numpy as np
 import tf2_ros
 from copy import deepcopy
-
+from std_srvs.srv import SetBool
 
 import heapq
 import math
@@ -32,7 +32,7 @@ class OpenCVFrontierDetector(Node):
 
         self.declare_parameter('path_topic', '/astar_planner_node/out/localPath')
         self.declare_parameter('cmd_vel_topic', '/cmd_vel')
-        self.declare_parameter('robot_frame', 'body')
+        self.declare_parameter('robot_frame', 'base_link')
         self.declare_parameter('odom_frame', 'odom')
         self.declare_parameter('map_frame', 'map')
 
@@ -41,43 +41,59 @@ class OpenCVFrontierDetector(Node):
         self.robot_frame = self.get_parameter('robot_frame').get_parameter_value().string_value
         self.odom_frame = self.get_parameter('odom_frame').get_parameter_value().string_value
         self.map_frame = self.get_parameter('map_frame').get_parameter_value().string_value
-        # self.create_subscription(OccupancyGrid, '/projected_map_1m', self.mapCallBack, 1)
-        # self.targetspub = self.create_publisher(MarkerArray, "/detected_markers", 1)
 
-        # self.inflated_map_pub = self.create_publisher(OccupancyGrid, "/projected_map_1m_inflated", 1)
-        # self.path_publisher = self.create_publisher(Marker, 'path_marker', 1)
-        
+        self.twist_publisher = self.create_publisher(Twist, '/cmd_vel', 1)
+        self.current_path_world = []
         self.path_subscriber = self.create_subscription(Path, self.path_topic, self.path_callback, 10)
 
         # Initialize the transform buffer and listener
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
-        self.create_timer(0.5, self.frontier_timer_callback)
+        #self.create_timer(0.5, self.frontier_timer_callback)
         self.create_timer(0.1, self.path_follower_timer_callback)
 
         self.in_motion = False
         self.pursuit_index = 0
 
-        self.twist_publisher = self.create_publisher(Twist, '/cmd_vel', 1)
+        self.srv = self.create_service(SetBool, '/navigation/follow_path', self.set_in_motion_callback)
+
+        self.target_allowed_time = TARGET_ALLOWED_TIME
+
+    def set_in_motion_callback(self, request, response):
+        self.in_motion = request.data
+        response.success = True
+        response.message = f"in_motion set to {self.in_motion}"
+        return response
 
     def path_callback(self, msg):
         self.path = msg
         self.current_index = 0
         self.get_logger().info(f"Received new path with {len(msg.poses)} poses")
-
+        self.current_path_world = []
         for p in self.path.poses:
                 #pose = Pose()
                 #pose.position.x, pose.position.y = map_to_world_coords(current_map, p[0], p[1])
                 #path_marker.points.append(pose.position)
                 self.current_path_world.append([p.pose.position.x, p.pose.position.y])
 
-        self.in_motion = True
+        # self.in_motion = True
 
 
     def path_follower_timer_callback(self):
+
+        if not self.in_motion:
+            return
+
+        if not hasattr(self, "current_path_world"):
+            self.get_logger().warn("Path Not Yet Planned")
+            return
+
+        if len(self.current_path_world) == 0:
+            return
+
         try:
-            transform = self.tf_buffer.lookup_transform("map", "body", rclpy.time.Time())
+            transform = self.tf_buffer.lookup_transform("map", self.robot_frame, rclpy.time.Time())
 
             # Extract the robot's position and orientation in the "map" frame
             self.x = transform.transform.translation.x
@@ -92,14 +108,6 @@ class OpenCVFrontierDetector(Node):
             # Log a warning if the transform cannot be obtained
             self.get_logger().warn("Could not get transform from map to body: {}".format(ex))
             return
-
-        if not self.in_motion:
-            return
-        
-        # if self.is_path_through_walls(self.mapData, self.current_path_map):
-        #     print("Path passes through walls, cancelling target...")
-        #     self.in_motion = False
-        #     return
 
         linear_velocity, angular_velocity, self.pursuit_index = self.pure_pursuit(
             self.x,
@@ -116,12 +124,13 @@ class OpenCVFrontierDetector(Node):
             print("Target reached")
             linear_velocity = 0
             angular_velocity = 0
+            self.current_path_world = []
         
-        if self.get_clock().now().to_msg().sec > self.target_allowed_time:
-            self.in_motion = False
-            print(f"Target not reached in {TARGET_ALLOWED_TIME} seconds, cancelling target...")
-            linear_velocity = 0
-            angular_velocity = 0
+        # if self.get_clock().now().to_msg().sec > self.target_allowed_time:
+        #     self.in_motion = False
+        #     print(f"Target not reached in {TARGET_ALLOWED_TIME} seconds, cancelling target...")
+        #     linear_velocity = 0
+        #     angular_velocity = 0
 
         # Publish the twist commands
         twist_command = Twist()
@@ -130,13 +139,13 @@ class OpenCVFrontierDetector(Node):
         self.twist_publisher.publish(twist_command)
 
 
-    def yaw_from_quaternion(x, y, z, w):
+    def yaw_from_quaternion(self, x, y, z, w):
         siny_cosp = 2 * (w * z + x * y)
         cosy_cosp = 1 - 2 * (y * y + z * z)
         yaw = math.atan2(siny_cosp, cosy_cosp)
         return yaw
 
-    def pure_pursuit(current_x, current_y, current_heading, path, index, speed, lookahead_distance, forward=True):
+    def pure_pursuit(self, current_x, current_y, current_heading, path, index, speed, lookahead_distance, forward=True):
         closest_point = None
         if forward:
             v = speed  # Set the speed to a negative value to make the robot go in reverse
